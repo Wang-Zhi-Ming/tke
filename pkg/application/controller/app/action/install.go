@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -46,7 +47,28 @@ func Install(ctx context.Context,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 
+	var beginInstallTime, preInstallTime, pullChartTime, installTime, postInstallTime time.Time
+	defer func() {
+		var preInstallCost, pullChartCost, installCost, postInstallCost int
+		if !preInstallTime.IsZero() {
+			preInstallCost = int(preInstallTime.Sub(beginInstallTime).Milliseconds())
+			if !pullChartTime.IsZero() {
+				pullChartCost = int(pullChartTime.Sub(preInstallTime).Milliseconds())
+				if !installTime.IsZero() {
+					installCost = int(installTime.Sub(pullChartTime).Milliseconds())
+					if !postInstallTime.IsZero() {
+						postInstallCost = int(postInstallTime.Sub(installTime).Milliseconds())
+					}
+				}
+			}
+		}
+		log.Infof("handle for %s/%s cost: %d %d %d %d",
+			app.Namespace, app.Name, preInstallCost, pullChartCost, installCost, postInstallCost)
+	}()
+
+	beginInstallTime = time.Now()
 	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	preInstallTime = time.Now()
 	if err != nil {
 		if updateStatusFunc != nil {
 			newStatus := app.Status.DeepCopy()
@@ -65,6 +87,7 @@ func Install(ctx context.Context,
 	}
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	pullChartTime = time.Now()
 	if err != nil {
 		newStatus := app.Status.DeepCopy()
 		if updateStatusFunc != nil {
@@ -131,7 +154,7 @@ func Install(ctx context.Context,
 		Wait:             app.Spec.Chart.InstallPara.Wait,
 		WaitForJobs:      app.Spec.Chart.InstallPara.WaitForJobs,
 	})
-
+	installTime = time.Now()
 	if err != nil {
 		if errors.Is(err, errors.New("chart manifest is empty")) {
 			log.Errorf(fmt.Sprintf("ERROR: install cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
@@ -158,6 +181,7 @@ func Install(ctx context.Context,
 	}
 
 	err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	postInstallTime = time.Now()
 	// 先走完hook，在更新app状态为succeed
 	if err != nil {
 		if updateStatusFunc != nil {
