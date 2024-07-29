@@ -21,6 +21,7 @@ package action
 import (
 	"context"
 	"errors"
+	"time"
 
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -30,6 +31,7 @@ import (
 	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	"tkestack.io/tke/pkg/application/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Uninstall provides the implementation of 'helm uninstall'.
@@ -39,7 +41,25 @@ func Uninstall(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration) (*release.UninstallReleaseResponse, error) {
 	hooks := getHooks(app)
+
+	var beginUninstallTime, preUninstallTime, uninstallTime, postUninstallTime time.Time
+	defer func() {
+		var preUninstallCost, uninstallCost, postUninstallCost int
+		if !preUninstallTime.IsZero() {
+			preUninstallCost = int(preUninstallTime.Sub(beginUninstallTime).Milliseconds())
+			if !uninstallTime.IsZero() {
+				uninstallCost = int(uninstallTime.Sub(preUninstallTime).Milliseconds())
+				if !postUninstallTime.IsZero() {
+					postUninstallCost = int(postUninstallTime.Sub(uninstallTime).Milliseconds())
+				}
+			}
+		}
+		log.Infof("handle for %s/%s cost: %d %d %d",
+			app.Namespace, app.Name, preUninstallCost, uninstallCost, postUninstallCost)
+	}()
+	beginUninstallTime = time.Now()
 	err := hooks.PreUninstall(ctx, applicationClient, platformClient, app, repo)
+	preUninstallTime = time.Now()
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +72,13 @@ func Uninstall(ctx context.Context,
 		ReleaseName: app.Spec.Name,
 		Timeout:     defaultTimeout,
 	})
+	uninstallTime = time.Now()
 
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return resp, err
 	}
 
 	err = hooks.PostUninstall(ctx, applicationClient, platformClient, app, repo)
+	postUninstallTime = time.Now()
 	return resp, err
 }

@@ -80,7 +80,7 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 		histClient.Max = 1
 		rels, err := histClient.Run(options.ReleaseName)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
+			log.Infof("Release %s does not exist. Installing it now.", options.ReleaseName)
 			return c.Install(ctx, &InstallOptions{
 				DryRun:           options.DryRun,
 				DependencyUpdate: options.DependencyUpdate,

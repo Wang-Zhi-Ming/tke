@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -46,7 +47,28 @@ func Upgrade(ctx context.Context,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 
+	var beginUpgradeTime, preUpgradeTime, pullChartTime, upgradeTime, postupgradeTime time.Time
+	defer func() {
+		var preUpgradeCost, pullChartCost, upgradeCost, postUpgradeCost int
+		if !preUpgradeTime.IsZero() {
+			preUpgradeCost = int(preUpgradeTime.Sub(beginUpgradeTime).Milliseconds())
+			if !pullChartTime.IsZero() {
+				pullChartCost = int(pullChartTime.Sub(preUpgradeTime).Milliseconds())
+				if !upgradeTime.IsZero() {
+					upgradeCost = int(upgradeTime.Sub(pullChartTime).Milliseconds())
+					if !postupgradeTime.IsZero() {
+						postUpgradeCost = int(postupgradeTime.Sub(upgradeTime).Milliseconds())
+					}
+				}
+			}
+		}
+		log.Infof("handle for %s/%s cost: %d %d %d %d",
+			app.Namespace, app.Name, preUpgradeCost, pullChartCost, upgradeCost, postUpgradeCost)
+	}()
+
+	beginUpgradeTime = time.Now()
 	err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	preUpgradeTime = time.Now()
 	if err != nil {
 		if updateStatusFunc != nil {
 			newStatus := app.Status.DeepCopy()
@@ -65,6 +87,7 @@ func Upgrade(ctx context.Context,
 	}
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	pullChartTime = time.Now()
 	if err != nil {
 		newStatus := app.Status.DeepCopy()
 		if updateStatusFunc != nil {
@@ -124,6 +147,7 @@ func Upgrade(ctx context.Context,
 		Wait:             app.Spec.Chart.UpgradePara.Wait,
 		WaitForJobs:      app.Spec.Chart.UpgradePara.WaitForJobs,
 	})
+	upgradeTime = time.Now()
 	if err != nil {
 		if errors.Is(err, errors.New("chart manifest is empty")) {
 			log.Errorf(fmt.Sprintf("ERROR: upgrade cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
@@ -191,6 +215,7 @@ func Upgrade(ctx context.Context,
 	}
 
 	err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	postupgradeTime = time.Now()
 	// 先走完hook，在更新app状态为succeed
 	if err != nil {
 		if updateStatusFunc != nil {
