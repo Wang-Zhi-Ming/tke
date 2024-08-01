@@ -43,6 +43,7 @@ func Uninstall(ctx context.Context,
 	hooks := getHooks(app)
 
 	var beginUninstallTime, preUninstallTime, uninstallTime, postUninstallTime time.Time
+	key := app.Namespace + "/" + app.Name
 	defer func() {
 		var preUninstallCost, uninstallCost, postUninstallCost int
 		if !preUninstallTime.IsZero() {
@@ -54,8 +55,8 @@ func Uninstall(ctx context.Context,
 				}
 			}
 		}
-		log.Infof("handle for %s/%s cost: %d %d %d",
-			app.Namespace, app.Name, preUninstallCost, uninstallCost, postUninstallCost)
+		log.Infof("handle for %s cost: %d %d %d",
+			key, preUninstallCost, uninstallCost, postUninstallCost)
 	}()
 	beginUninstallTime = time.Now()
 	err := hooks.PreUninstall(ctx, applicationClient, platformClient, app, repo)

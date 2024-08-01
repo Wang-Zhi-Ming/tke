@@ -48,6 +48,7 @@ func Upgrade(ctx context.Context,
 	hooks := getHooks(app)
 
 	var beginUpgradeTime, preUpgradeTime, pullChartTime, upgradeTime, postupgradeTime time.Time
+	key := app.Namespace + "/" + app.Name
 	defer func() {
 		var preUpgradeCost, pullChartCost, upgradeCost, postUpgradeCost int
 		if !preUpgradeTime.IsZero() {
@@ -62,8 +63,8 @@ func Upgrade(ctx context.Context,
 				}
 			}
 		}
-		log.Infof("handle for %s/%s cost: %d %d %d %d",
-			app.Namespace, app.Name, preUpgradeCost, pullChartCost, upgradeCost, postUpgradeCost)
+		log.Infof("handle for %s cost: %d %d %d %d",
+			key, preUpgradeCost, pullChartCost, upgradeCost, postUpgradeCost)
 	}()
 
 	beginUpgradeTime = time.Now()

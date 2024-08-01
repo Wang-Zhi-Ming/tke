@@ -48,6 +48,7 @@ func Install(ctx context.Context,
 	hooks := getHooks(app)
 
 	var beginInstallTime, preInstallTime, pullChartTime, installTime, postInstallTime time.Time
+	key := app.Namespace + "/" + app.Name
 	defer func() {
 		var preInstallCost, pullChartCost, installCost, postInstallCost int
 		if !preInstallTime.IsZero() {
@@ -62,8 +63,8 @@ func Install(ctx context.Context,
 				}
 			}
 		}
-		log.Infof("handle for %s/%s cost: %d %d %d %d",
-			app.Namespace, app.Name, preInstallCost, pullChartCost, installCost, postInstallCost)
+		log.Infof("handle for %s cost: %d %d %d %d",
+			key, preInstallCost, pullChartCost, installCost, postInstallCost)
 	}()
 
 	beginInstallTime = time.Now()
