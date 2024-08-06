@@ -58,6 +58,8 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 			ClientConfig: cfg.ApplicationAPIServerClientConfig,
 		}
 
+		log.Infof("ApplicationAPIServerClientConfig: %v", cfg.ApplicationAPIServerClientConfig)
+		log.Infof("PlatformAPIServerClientConfig: %v", cfg.PlatformAPIServerClientConfig)
 		controllerContext, err := CreateControllerContext(cfg, rootClientBuilder, ctx.Done())
 		if err != nil {
 			log.Fatalf("error building controller context: %v", err)
