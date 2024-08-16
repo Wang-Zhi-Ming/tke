@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"tkestack.io/tke/pkg/util/log"
 
 	"helm.sh/helm/v3/pkg/registry"
 
@@ -36,6 +37,19 @@ type PullOptions struct {
 	ChartPathOptions
 
 	DestDir string
+}
+
+// temp test for show helm cache repository
+func ShowHelmRepository() error {
+	dir := "/root/.cache/helm/repository"
+	items, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, item := range items {
+		log.Info("scan helm repository file: " + item.Name())
+	}
+	return nil
 }
 
 // Pull is the action for pulling a chart.
@@ -60,7 +74,14 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 
+	log.Info("[pull.go] Pull =>>>>")
 	GarbageCollectCacheChartsFile()
+
+	err = ShowHelmRepository()
+	if err != nil {
+		log.Info("ShowHelmRepository raise error")
+		log.Info(err.Error())
+	}
 	if err := os.MkdirAll(settings.RepositoryCache, 0755); err != nil {
 		return "", err
 	}
@@ -68,6 +89,13 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	err = ShowHelmRepository()
+	if err != nil {
+		log.Info("ShowHelmRepository raise error")
+		log.Info(err.Error())
+	}
+	log.Info("<=== [pull.go] Pull")
 
 	destfile := filepath.Join(client.DestDir, fmt.Sprintf("%s-%s.tgz", options.Chart, options.Version))
 	// get file name

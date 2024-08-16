@@ -20,7 +20,6 @@ package action
 
 import (
 	"context"
-
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
