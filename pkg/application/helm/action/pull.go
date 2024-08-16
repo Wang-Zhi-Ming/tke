@@ -82,6 +82,24 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 		log.Info("ShowHelmRepository raise error")
 		log.Info(err.Error())
 	}
+
+	log.Info("remove helm cache")
+	err = os.RemoveAll("/root/.cache/helm/repository")
+	if err != nil {
+		log.Info("remove helm cache failed")
+	}
+	err = ShowHelmRepository()
+	if err != nil {
+		log.Info("ShowHelmRepository raise error")
+		log.Info(err.Error())
+	}
+	err = os.MkdirAll("/root/.cache/helm/repository", 0755)
+	if err != nil {
+		log.Info("mkdir failed")
+		log.Info(err.Error())
+	}
+
+	log.Info("begin pull =>>")
 	if err := os.MkdirAll(settings.RepositoryCache, 0755); err != nil {
 		return "", err
 	}
@@ -89,6 +107,7 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Info("finished pull =>>")
 
 	err = ShowHelmRepository()
 	if err != nil {
