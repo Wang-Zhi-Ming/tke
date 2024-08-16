@@ -354,6 +354,7 @@ func (c *Controller) processUpdate(ctx context.Context, cachedApp *cachedApp, ap
 func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cachedApp, app *applicationv1.App) (*applicationv1.App, error) {
 	switch app.Status.Phase {
 	case applicationv1.AppPhaseInstalling:
+		log.Info("handlePhase begin install")
 		return action.Install(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo, c.updateStatus)
 	case applicationv1.AppPhaseUpgrading:
 		// if only update status, generation won't change, and we won't upgrade

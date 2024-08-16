@@ -87,6 +87,7 @@ func Install(ctx context.Context,
 		return nil, err
 	}
 
+	log.Info("install.go begin Pull")
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	pullChartTime = time.Now()
 	if err != nil {
@@ -103,6 +104,7 @@ func Install(ctx context.Context,
 			}
 		}
 	}
+	log.Info("helm Pull finished, destfile :" + destfile)
 
 	client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 	if err != nil {
