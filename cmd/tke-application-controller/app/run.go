@@ -20,8 +20,10 @@ package app
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"os"
 	"time"
+	"tkestack.io/tke/pkg/application/helm/action"
 
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apiserver/pkg/server/healthz"
@@ -85,6 +87,10 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		run(ctx)
 		panic("unreachable")
 	}
+
+	go func() {
+		wait.Until(action.GarbageCollectCacheChartsFile, time.Second, stopCh)
+	}()
 
 	id, err := os.Hostname()
 	if err != nil {
