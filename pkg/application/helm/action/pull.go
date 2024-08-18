@@ -75,7 +75,7 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 
 	log.Info("[pull.go] Pull =>>>>")
-	GarbageCollectCacheChartsFile()
+	//GarbageCollectCacheChartsFile()
 
 	err = ShowHelmRepository()
 	if err != nil {
