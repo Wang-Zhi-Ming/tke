@@ -28,6 +28,7 @@ import (
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Pull is the action for pulling a chart.
@@ -45,6 +46,12 @@ func Pull(ctx context.Context,
 	if err != nil {
 		return "", err
 	}
+
+	log.Info("Pull func: repo ==>")
+	log.Infof("%+v\n", repo)
+
+	log.Info("chartPathbasicOPtions ==>")
+	log.Infof("%+v\n", chartPathBasicOptions)
 
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: chartPathBasicOptions,

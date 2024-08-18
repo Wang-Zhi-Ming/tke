@@ -116,6 +116,12 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 	}
 	log.Info("<=== [pull.go] Pull")
 
+	log.Info("print settings ==>")
+	log.Infof("%+v\n", settings)
+
+	log.Info("print options ==>")
+	log.Infof("%+v\n", options)
+
 	destfile := filepath.Join(client.DestDir, fmt.Sprintf("%s-%s.tgz", options.Chart, options.Version))
 	// get file name
 	// var out strings.Builder
