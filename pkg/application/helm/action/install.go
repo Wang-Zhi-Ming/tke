@@ -142,6 +142,12 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 
 	// unpack first if need
 	root := settings.RepositoryCache
+	log.Info("[helm InstallWithLocal] settings:")
+	log.Infof("%+v\n", settings)
+
+	log.Info("[helm InstallWithLocal] options:")
+	log.Infof("%+v\n", options)
+
 	if options.ExistedFile != "" && file.IsFile(options.ExistedFile) {
 		temp, err := ExpandFile(options.ExistedFile, settings.RepositoryCache)
 		if err != nil {
@@ -152,6 +158,8 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 			os.RemoveAll(temp)
 		}()
 	}
+
+	log.Info("root:" + root)
 
 	var cp string
 	if len(chartLocalFile) == 0 {
