@@ -88,6 +88,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		panic("unreachable")
 	}
 
+	// Perform garbage collection continuously
 	go func() {
 		wait.Until(action.GarbageCollectCacheChartsFile, time.Second, stopCh)
 	}()

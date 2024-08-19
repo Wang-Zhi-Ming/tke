@@ -155,7 +155,16 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 		}
 		root = temp
 		defer func() {
-			os.RemoveAll(temp)
+			log.Info("[helm InstallWithLocal] try remove dir: " + temp)
+			err2 := os.RemoveAll(temp)
+			if err2 != nil {
+				log.Info("[helm InstallWithLocal] dir remove failed: " + temp)
+			}
+			dir := "root:/root/.cache/helm/repository/251237922/cls-jny4b33y-kube-system/local/"
+			items, _ := os.ReadDir(dir)
+			for _, item := range items {
+				log.Info("scan helm local file: " + item.Name())
+			}
 		}()
 	}
 
